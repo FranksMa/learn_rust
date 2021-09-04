@@ -1,11 +1,15 @@
-fn main() {
-    let a = 42;
-    let ref b = a;
-    let c = &a;
-    assert_eq!(b, c);
+fn main() -> Result<(), battery::Error> {
+    let manager = battery::Manager::new()?;
 
-    let mut a = [1,2,3];
-    let ref mut b = a;
-    b[0] = 0;
-    assert_eq!(a, [0,2,3]);
+    for (idx, maybe_battery) in manager.batteries()?.enumerate() {
+        let battery = maybe_battery?;
+        println!("Battery #{}:", idx);
+        println!("Vendor: {:?}", battery.vendor());
+        println!("Model: {:?}", battery.model());
+        println!("State: {:?}", battery.state());
+        println!("Time to full charge: {:?}", battery.time_to_full());
+        println!("");
+    }
+
+    Ok(())
 }
