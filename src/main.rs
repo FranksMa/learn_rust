@@ -1,15 +1,24 @@
-fn main() -> Result<(), battery::Error> {
+use std::io;
+use std::thread;
+use std::time::Duration;
+
+fn main() -> battery::Result<()> {
     let manager = battery::Manager::new()?;
+    let mut battery = match manager.batteries()?.next() {
+        Some(Ok(battery)) => battery,
+        Some(Err(e)) => {
+            eprintln!("Unable to access battery information");
+            return Err(e);
+        }
+        None => {
+            eprintln!("Unable to find any batteries");
+            return Err(io::Error::from(io::ErrorKind::NotFound).into());
+        }
+    };
 
-    for (idx, maybe_battery) in manager.batteries()?.enumerate() {
-        let battery = maybe_battery?;
-        println!("Battery #{}:", idx);
-        println!("Vendor: {:?}", battery.vendor());
-        println!("Model: {:?}", battery.model());
-        println!("State: {:?}", battery.state());
-        println!("Time to full charge: {:?}", battery.time_to_full());
-        println!("");
+    loop {
+        println!("{:?}", battery);
+        thread::sleep(Duration::from_secs(1));
+        manager.refresh(&mut battery)?;
     }
-
-    Ok(())
 }
